@@ -59,7 +59,7 @@ struct RefCountedPtrBase
 #endif
 
 protected:
-	inline RefCountsType& getRefCounts()
+	inline RefCountsType& getRefCounts() const
 	{
 		static RefCountsType refcounts;
 		return refcounts;
@@ -76,7 +76,7 @@ protected:
   This implementation uses a hash table to look up the reference count
   associated with a particular pointer.
 
-  @tparam T The class type.
+  @t param T The class type.
 
   @todo Decompose RefCountedPtr using a policy. At a minimum, the underlying
 		reference count should be policy based (to support atomic operations)
