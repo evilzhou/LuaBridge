@@ -708,6 +708,64 @@ private:
 			return *this;
 		}
 
+		template <class TG, class TS>
+		Class <T>& addProperty(char const* name, TG(T::* get) (), void (T::* set) (TS))
+		{
+			// Add to __propget in class and const tables.
+			{
+				rawgetfield(L, -2, "__propget");
+				rawgetfield(L, -4, "__propget");
+				typedef TG(T::*get_t) ();
+				new (lua_newuserdata(L, sizeof(get_t))) get_t(get);
+				lua_pushcclosure(L, &CFunc::CallConstMember <get_t>::f, 1);
+				lua_pushvalue(L, -1);
+				rawsetfield(L, -4, name);
+				rawsetfield(L, -2, name);
+				lua_pop(L, 2);
+			}
+
+			{
+				// Add to __propset in class table.
+				rawgetfield(L, -2, "__propset");
+				assert(lua_istable(L, -1));
+				typedef void (T::* set_t) (TS);
+				new (lua_newuserdata(L, sizeof(set_t))) set_t(set);
+				lua_pushcclosure(L, &CFunc::CallMember <set_t>::f, 1);
+				rawsetfield(L, -2, name);
+				lua_pop(L, 1);
+			}
+
+			return *this;
+		}
+
+		template <class FPG, class FPS>
+		Class <T>& addProperty(char const* name, FPG const fpg, FPS const fps)
+		{
+			// Add to __propget in class and const tables.
+			{
+				rawgetfield(L, -2, "__propget");
+				rawgetfield(L, -4, "__propget");
+				new (lua_newuserdata(L, sizeof(fpg))) FPG(fpg);
+				lua_pushcclosure(L, &CFunc::CallConstMember <FPG>::f, 1);
+				lua_pushvalue(L, -1);
+				rawsetfield(L, -4, name);
+				rawsetfield(L, -2, name);
+				lua_pop(L, 2);
+			}
+
+			{
+				// Add to __propset in class table.
+				rawgetfield(L, -2, "__propset");
+				assert(lua_istable(L, -1));
+				new (lua_newuserdata(L, sizeof(fps))) FPS(fps);
+				lua_pushcclosure(L, &CFunc::CallConstMember <FPS>::f, 1);
+				rawsetfield(L, -2, name);
+				lua_pop(L, 1);
+			}
+
+			return *this;
+		}
+
 		// read-only
 		template <class TG>
 		Class <T>& addProperty(char const* name, TG(T::* get) () const)
@@ -718,6 +776,40 @@ private:
 			typedef TG(T::*get_t) () const;
 			new (lua_newuserdata(L, sizeof(get_t))) get_t(get);
 			lua_pushcclosure(L, &CFunc::CallConstMember <get_t>::f, 1);
+			lua_pushvalue(L, -1);
+			rawsetfield(L, -4, name);
+			rawsetfield(L, -2, name);
+			lua_pop(L, 2);
+
+			return *this;
+		}
+
+		template <class TG>
+		Class <T>& addProperty(char const* name, TG(T::* get) ())
+		{
+			// Add to __propget in class and const tables.
+			rawgetfield(L, -2, "__propget");
+			rawgetfield(L, -4, "__propget");
+			typedef TG(T::*get_t) ();
+			new (lua_newuserdata(L, sizeof(get_t))) get_t(get);
+			lua_pushcclosure(L, &CFunc::CallConstMember <get_t>::f, 1);
+			lua_pushvalue(L, -1);
+			rawsetfield(L, -4, name);
+			rawsetfield(L, -2, name);
+			lua_pop(L, 2);
+
+			return *this;
+		}
+
+		template <class FP>
+		Class <T>& addProperty(char const* name, FP const fp)
+		{
+
+			// Add to __propget in class and const tables.
+			rawgetfield(L, -2, "__propget");
+			rawgetfield(L, -4, "__propget");
+			new (lua_newuserdata(L, sizeof(fp))) FP(fp);
+			lua_pushcclosure(L, &CFunc::CallConstMember <FP>::f, 1);
 			lua_pushvalue(L, -1);
 			rawsetfield(L, -4, name);
 			rawsetfield(L, -2, name);
@@ -1064,6 +1156,59 @@ public:
 			lua_pushstring(L, name);
 			lua_pushcclosure(L, &CFunc::readOnlyError, 1);
 		}
+		rawsetfield(L, -2, name);
+		lua_pop(L, 1);
+
+		return *this;
+	}
+
+	template <class FPG, class FPS>
+	Namespace& addProperty(char const* name, FPG const fpg, FPS const fps)
+	{
+		assert(lua_istable(L, -1));
+
+		rawgetfield(L, -1, "__propget");
+		assert(lua_istable(L, -1));
+		new (lua_newuserdata(L, sizeof(fpg))) FPG(fpg);
+		lua_pushcclosure(L, &CFunc::Call <FPG>::f, 1);
+		rawsetfield(L, -2, name);
+		lua_pop(L, 1);
+
+		rawgetfield(L, -1, "__propset");
+		assert(lua_istable(L, -1));
+		new (lua_newuserdata(L, sizeof(fps))) FPS(fps);
+		lua_pushcclosure(L, &CFunc::Call <FPS>::f, 1);
+		rawsetfield(L, -2, name);
+		lua_pop(L, 1);
+
+		return *this;
+	}
+
+	template <class TG>
+	Namespace& addProperty(char const* name, TG(*get) ())
+	{
+		assert(lua_istable(L, -1));
+
+		rawgetfield(L, -1, "__propget");
+		assert(lua_istable(L, -1));
+		typedef TG(*get_t) ();
+		new (lua_newuserdata(L, sizeof(get_t))) get_t(get);
+		lua_pushcclosure(L, &CFunc::Call <TG(*) (void)>::f, 1);
+		rawsetfield(L, -2, name);
+		lua_pop(L, 1);
+
+		return *this;
+	}
+
+	template <class FP>
+	Namespace& addProperty(char const* name, FP const fp)
+	{
+		assert(lua_istable(L, -1));
+
+		rawgetfield(L, -1, "__propget");
+		assert(lua_istable(L, -1));
+		new (lua_newuserdata(L, sizeof(fp))) FP(fp);
+		lua_pushcclosure(L, &CFunc::Call <FP>::f, 1);
 		rawsetfield(L, -2, name);
 		lua_pop(L, 1);
 

@@ -281,7 +281,7 @@ struct CFunc
 		static int f(lua_State* L)
 		{
 			assert(isfulluserdata(L, lua_upvalueindex(1)));
-			T const* const t = Userdata::get <T>(L, 1, true);
+			T* const t = Userdata::get <T>(L, 1, true);
 			MemFnPtr const& fnptr = *static_cast <MemFnPtr const*> (lua_touserdata(L, lua_upvalueindex(1)));
 			assert(fnptr != 0);
 			ArgList <Params, 2> args(L);
@@ -324,7 +324,7 @@ struct CFunc
 		static int f(lua_State* L)
 		{
 			assert(isfulluserdata(L, lua_upvalueindex(1)));
-			T const* const t = Userdata::get <T>(L, 1, true);
+			T* const t = Userdata::get <T>(L, 1, true);
 			MemFnPtr const& fnptr = *static_cast <MemFnPtr const*> (lua_touserdata(L, lua_upvalueindex(1)));
 			assert(fnptr != 0);
 			ArgList <Params, 2> args(L);
@@ -361,7 +361,7 @@ struct CFunc
 		{
 			assert(isfulluserdata(L, lua_upvalueindex(1)));
 			typedef int (T::*MFP)(lua_State* L);
-			T const* const t = Userdata::get <T>(L, 1, true);
+			T* const t = Userdata::get <T>(L, 1, true);
 			MFP const& fnptr = *static_cast <MFP const*> (lua_touserdata(L, lua_upvalueindex(1)));
 			assert(fnptr != 0);
 			return (t->*fnptr) (L);
