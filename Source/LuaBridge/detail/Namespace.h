@@ -902,7 +902,7 @@ private:
 			// Add to __propdefaultget in class and const tables.
 			{
 				new (lua_newuserdata(L, sizeof(fpg))) FPG(fpg);
-				lua_pushcclosure(L, &CFunc::CallMember <FPG>::f, 1);
+				lua_pushcclosure(L, &CFunc::CallConstMember <FPG>::f, 1);
 				lua_pushvalue(L, -1);
 				rawsetfield(L, -5, "__propdefaultget");
 				rawsetfield(L, -3, "__propdefaultget");
