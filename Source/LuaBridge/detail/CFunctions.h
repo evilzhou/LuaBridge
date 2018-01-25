@@ -41,58 +41,125 @@ struct CFunc
 	*/
 	static int indexMetaMethod(lua_State* L)
 	{
-		int result = 0;
-		lua_getmetatable(L, 1);                // push metatable of arg1
+		// from __propget
+		lua_getmetatable(L, 1);                      // get metatable for object
 		for (;;)
 		{
-			lua_pushvalue(L, 2);                 // push key arg2
-			lua_rawget(L, -2);                   // lookup key in metatable
-			if (lua_isnil(L, -1))                // not found
+			lua_pushvalue(L, 2);                       // push key arg2
+			lua_rawget(L, -2);                         // lookup key in metatable
+			if (lua_iscfunction(L, -1) || lua_istable(L, -1))                // ensure its a cfunction or table
 			{
-				lua_pop(L, 1);                     // discard nil
-				rawgetfield(L, -1, "__propget");   // lookup __propget in metatable
-				lua_pushvalue(L, 2);               // push key arg2
-				lua_rawget(L, -2);                 // lookup key in __propget
-				lua_remove(L, -2);                 // discard __propget
-				if (lua_iscfunction(L, -1))
+				lua_remove(L, -2);                       // remove metatable
+				return 1;
+			}
+			else if (lua_isnil(L, -1))
+			{
+				lua_pop(L, 1);
+			}
+			else
+			{
+				lua_pop(L, 2);
+				throw std::logic_error("not a cfunction or table");
+			}
+
+			rawgetfield(L, -1, "__propget");           // get __propget table
+			if (lua_istable(L, -1))                    // ensure it is a table
+			{
+				lua_pushvalue(L, 2);                     // push key arg2
+				lua_rawget(L, -2);                       // lookup key in __propget
+				lua_remove(L, -2);                       // remove __propget
+				if (lua_iscfunction(L, -1))              // ensure its a cfunction
 				{
-					lua_remove(L, -2);               // discard metatable
-					lua_pushvalue(L, 1);             // push arg1
-					lua_call(L, 1, 1);               // call cfunction
-					result = 1;
-					break;
+					lua_remove(L, -2);                     // remove metatable
+					lua_call(L, 0, 1);
+					return 1;
+				}
+				else if (lua_isnil(L, -1))
+				{
+					lua_pop(L, 1);
 				}
 				else
 				{
-					assert(lua_isnil(L, -1));
-					lua_pop(L, 1);                   // discard nil and fall through
+					lua_pop(L, 2);
+
+					// We only put cfunctions into __propget.
+					throw std::logic_error("not a cfunction");
 				}
 			}
 			else
 			{
-				assert(lua_istable(L, -1) || lua_iscfunction(L, -1));
-				lua_remove(L, -2);
-				result = 1;
-				break;
+				lua_pop(L, 2);
+
+				// __propget is missing, or not a table.
+				throw std::logic_error("missing __propget table");
 			}
 
+			// Repeat the lookup in the __parent metafield,
+			// or return nil if the field doesn't exist.
 			rawgetfield(L, -1, "__parent");
 			if (lua_istable(L, -1))
 			{
 				// Remove metatable and repeat the search in __parent.
 				lua_remove(L, -2);
 			}
+			else if (lua_isnil(L, -1))
+			{
+				lua_pop(L, 2);
+				break;
+			}
 			else
 			{
-				// Discard metatable and return nil.
-				assert(lua_isnil(L, -1));
-				lua_remove(L, -2);
-				result = 1;
-				break;
+				lua_pop(L, 2);
+				throw std::logic_error("__parent is not a table");
 			}
 		}
 
-		return result;
+		// from __propdefaultget
+		lua_getmetatable(L, 1);                      // get metatable for object
+		for (;;)
+		{
+			rawgetfield(L, -1, "__propdefaultget");		// get __propdefaultget table
+			if (lua_iscfunction(L, -1))						// ensure it is a table
+			{
+				lua_remove(L, -2);                     // remove metatable
+				lua_pushvalue(L, 2);
+				lua_call(L, 1, 1);
+				return 1;
+			}
+			else if (lua_isnil(L, -1))
+			{
+				lua_pop(L, 1);
+			}
+			else
+			{
+				lua_pop(L, 2);
+
+				// __propdefaultget is missing, or not a table.
+				throw std::logic_error("missing __propdefaultget table");
+			}
+
+			// Repeat the lookup in the __parent metafield,
+			// or return nil if the field doesn't exist.
+			rawgetfield(L, -1, "__parent");
+			if (lua_istable(L, -1))
+			{
+				// Remove metatable and repeat the search in __parent.
+				lua_remove(L, -2);
+			}
+			else if (lua_isnil(L, -1))
+			{
+				lua_pop(L, 2);
+				break;
+			}
+			else
+			{
+				lua_pop(L, 2);
+
+				throw std::logic_error("__parent is not a table");
+			}
+		}
+
+		return luaL_error(L, "can't find method to get member named '%s'", lua_tostring(L, 2));
 	}
 
 	//----------------------------------------------------------------------------
@@ -105,44 +172,66 @@ struct CFunc
 	*/
 	static int newindexMetaMethod(lua_State* L)
 	{
-		int result = 0;
-		lua_getmetatable(L, 1);                // push metatable of arg1
+		// from __propset
+		lua_getmetatable(L, 1);
 		for (;;)
 		{
-			rawgetfield(L, -1, "__propset");     // lookup __propset in metatable
-			assert(lua_istable(L, -1));
-			lua_pushvalue(L, 2);                 // push key arg2
-			lua_rawget(L, -2);                   // lookup key in __propset
-			lua_remove(L, -2);                   // discard __propset
-			if (lua_iscfunction(L, -1))          // ensure value is a cfunction
-			{
-				lua_remove(L, -2);                 // discard metatable
-				lua_pushvalue(L, 3);               // push new value arg3
-				lua_call(L, 1, 0);                 // call cfunction
-				result = 0;
-				break;
-			}
-			else
-			{
-				assert(lua_isnil(L, -1));
-				lua_pop(L, 1);
-			}
-
-			rawgetfield(L, -1, "__parent");
+			// Check __propset
+			rawgetfield(L, -1, "__propset");
 			if (lua_istable(L, -1))
 			{
-				// Remove metatable and repeat the search in __parent.
-				lua_remove(L, -2);
+				lua_pushvalue(L, 2);
+				lua_rawget(L, -2);
+				if (lua_isfunction(L, -1))
+				{
+					lua_remove(L, -2);
+					// found it, call the setFunction.
+					lua_pushvalue(L, 3);
+					lua_call(L, 1, 0);
+					return 0;
+				}
+				lua_pop(L, 1);
 			}
-			else
+			lua_pop(L, 1);
+
+			// Repeat the lookup in the __parent metafield.
+			rawgetfield(L, -1, "__parent");
+			if (lua_isnil(L, -1))
 			{
-				assert(lua_isnil(L, -1));
 				lua_pop(L, 2);
-				result = luaL_error(L, "no writable variable '%s'", lua_tostring(L, 2));
+				break;
 			}
+			lua_remove(L, -2);
 		}
 
-		return result;
+		// from __propdefaultset
+		lua_getmetatable(L, 1);
+		for (;;)
+		{
+			// Check __propdefaultset
+			rawgetfield(L, -1, "__propdefaultset");
+			if (lua_iscfunction(L, -1))
+			{
+				lua_remove(L, -2);
+				// found it, call the setFunction.
+				lua_pushvalue(L, 2);
+				lua_pushvalue(L, 3);
+				lua_call(L, 2, 0);
+				return 0;
+			}
+			lua_pop(L, 1);
+
+			// Repeat the lookup in the __parent metafield.
+			rawgetfield(L, -1, "__parent");
+			if (lua_isnil(L, -1))
+			{
+				lua_pop(L, 2);
+				break;
+			}
+			lua_remove(L, -2);
+		}
+
+		return luaL_error(L, "can't find method to set member named '%s'", lua_tostring(L, 2));
 	}
 
 	//----------------------------------------------------------------------------

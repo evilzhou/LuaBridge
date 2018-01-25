@@ -122,9 +122,7 @@ private:
 		*/
 		static int indexMetaMethod(lua_State* L)
 		{
-			int result = 0;
-
-			assert(lua_isuserdata(L, 1));               // warn on security bypass
+			// from __propget
 			lua_getmetatable(L, 1);                      // get metatable for object
 			for (;;)
 			{
@@ -133,8 +131,7 @@ private:
 				if (lua_iscfunction(L, -1))                // ensure its a cfunction
 				{
 					lua_remove(L, -2);                       // remove metatable
-					result = 1;
-					break;
+					return 1;
 				}
 				else if (lua_isnil(L, -1))
 				{
@@ -157,8 +154,7 @@ private:
 						lua_remove(L, -2);                     // remove metatable
 						lua_pushvalue(L, 1);                   // push class arg1
 						lua_call(L, 1, 1);
-						result = 1;
-						break;
+						return 1;
 					}
 					else if (lua_isnil(L, -1))
 					{
@@ -190,7 +186,52 @@ private:
 				}
 				else if (lua_isnil(L, -1))
 				{
-					result = 1;
+					lua_pop(L, 2);
+					break;
+				}
+				else
+				{
+					lua_pop(L, 2);
+					throw std::logic_error("__parent is not a table");
+				}
+			}
+
+			// from __propdefaultget
+			lua_getmetatable(L, 1);                      // get metatable for object
+			for (;;)
+			{
+				rawgetfield(L, -1, "__propdefaultget");		// get __propdefaultget table
+				if (lua_iscfunction(L, -1))						// ensure it is a table
+				{
+					lua_remove(L, -2);                     // remove metatable
+					lua_pushvalue(L, 1);                   // push class arg1
+					lua_pushvalue(L, 2);
+					lua_call(L, 2, 1);
+					return 1;
+				}
+				else if (lua_isnil(L, -1))
+				{
+					lua_pop(L, 1);
+				}
+				else
+				{
+					lua_pop(L, 2);
+
+					// __propdefaultget is missing, or not a table.
+					throw std::logic_error("missing __propdefaultget table");
+				}
+
+				// Repeat the lookup in the __parent metafield,
+				// or return nil if the field doesn't exist.
+				rawgetfield(L, -1, "__parent");
+				if (lua_istable(L, -1))
+				{
+					// Remove metatable and repeat the search in __parent.
+					lua_remove(L, -2);
+				}
+				else if (lua_isnil(L, -1))
+				{
+					lua_pop(L, 2);
 					break;
 				}
 				else
@@ -201,7 +242,7 @@ private:
 				}
 			}
 
-			return result;
+			return luaL_error(L, "can't find method to get member named '%s'", lua_tostring(L, 2));
 		}
 
 		//--------------------------------------------------------------------------
@@ -213,27 +254,24 @@ private:
 		*/
 		static int newindexMetaMethod(lua_State* L)
 		{
-			int result = 0;
-
+			// from __propset
 			lua_getmetatable(L, 1);
-
 			for (;;)
 			{
 				// Check __propset
 				rawgetfield(L, -1, "__propset");
-				if (!lua_isnil(L, -1))
+				if (lua_istable(L, -1))
 				{
 					lua_pushvalue(L, 2);
 					lua_rawget(L, -2);
-					if (!lua_isnil(L, -1))
+					if (lua_isfunction(L, -1))
 					{
+						lua_remove(L, -2);
 						// found it, call the setFunction.
-						assert(lua_isfunction(L, -1));
 						lua_pushvalue(L, 1);
 						lua_pushvalue(L, 3);
 						lua_call(L, 2, 0);
-						result = 0;
-						break;
+						return 0;
 					}
 					lua_pop(L, 1);
 				}
@@ -243,14 +281,41 @@ private:
 				rawgetfield(L, -1, "__parent");
 				if (lua_isnil(L, -1))
 				{
-					// Either the property or __parent must exist.
-					result = luaL_error(L,
-						"no member named '%s'", lua_tostring(L, 2));
+					lua_pop(L, 2);
+					break;
 				}
 				lua_remove(L, -2);
 			}
 
-			return result;
+			// from __propdefaultset
+			lua_getmetatable(L, 1);
+			for (;;)
+			{
+				// Check __propdefaultset
+				rawgetfield(L, -1, "__propdefaultset");
+				if (lua_iscfunction(L, -1))
+				{
+					lua_remove(L, -2);
+					// found it, call the setFunction.
+					lua_pushvalue(L, 1);
+					lua_pushvalue(L, 2);
+					lua_pushvalue(L, 3);
+					lua_call(L, 3, 0);
+					return 0;
+				}
+				lua_pop(L, 1);
+
+				// Repeat the lookup in the __parent metafield.
+				rawgetfield(L, -1, "__parent");
+				if (lua_isnil(L, -1))
+				{
+					lua_pop(L, 2);
+					break;
+				}
+				lua_remove(L, -2);
+			}
+
+			return luaL_error(L, "can't find method to set member named '%s'", lua_tostring(L, 2));
 		}
 
 		//--------------------------------------------------------------------------
@@ -272,6 +337,8 @@ private:
 			rawsetfield(L, -2, "__newindex");
 			lua_newtable(L);
 			rawsetfield(L, -2, "__propget");
+			lua_pushnil(L);
+			rawsetfield(L, -2, "__propdefaultget");
 
 			if (Security::hideMetatables())
 			{
@@ -301,8 +368,12 @@ private:
 			rawsetfield(L, -2, "__newindex");
 			lua_newtable(L);
 			rawsetfield(L, -2, "__propget");
+			lua_pushnil(L);
+			rawsetfield(L, -2, "__propdefaultget");
 			lua_newtable(L);
 			rawsetfield(L, -2, "__propset");
+			lua_pushnil(L);
+			rawsetfield(L, -2, "__propdefaultset");
 
 			lua_pushvalue(L, -2);
 			rawsetfield(L, -2, "__const"); // point to const table
@@ -346,8 +417,12 @@ private:
 			rawsetfield(L, -2, "__newindex");
 			lua_newtable(L);
 			rawsetfield(L, -2, "__propget");
+			lua_pushnil(L);
+			rawsetfield(L, -2, "__propdefaultget");
 			lua_newtable(L);
 			rawsetfield(L, -2, "__propset");
+			lua_pushnil(L);
+			rawsetfield(L, -2, "__propdefaultset");
 
 			lua_pushvalue(L, -2);
 			rawsetfield(L, -2, "__class"); // point to class table
@@ -818,6 +893,31 @@ private:
 			return *this;
 		}
 
+		/**
+		Add default support
+		*/
+		template <class FPG, class FPS>
+		Class <T>& addPropertyDefault(FPG const fpg, FPS const fps)
+		{
+			// Add to __propdefaultget in class and const tables.
+			{
+				new (lua_newuserdata(L, sizeof(fpg))) FPG(fpg);
+				lua_pushcclosure(L, &CFunc::CallMember <FPG>::f, 1);
+				lua_pushvalue(L, -1);
+				rawsetfield(L, -5, "__propdefaultget");
+				rawsetfield(L, -3, "__propdefaultget");
+			}
+
+			{
+				// Add to __propdefaultset in class table.
+				new (lua_newuserdata(L, sizeof(fps))) FPS(fps);
+				lua_pushcclosure(L, &CFunc::CallMember <FPS>::f, 1);
+				rawsetfield(L, -3, "__propdefaultset");
+			}
+
+			return *this;
+		}
+
 		//--------------------------------------------------------------------------
 		/**
 		  Add or replace a property member, by proxy.
@@ -1211,6 +1311,29 @@ public:
 		lua_pushcclosure(L, &CFunc::Call <FP>::f, 1);
 		rawsetfield(L, -2, name);
 		lua_pop(L, 1);
+
+		return *this;
+	}
+
+	/**
+	Add default support
+	*/
+	template <class FPG, class FPS>
+	Namespace& addPropertyDefault(FPG const fpg, FPS const fps)
+	{
+		// Add to __propdefaultget in class and const tables.
+		{
+			new (lua_newuserdata(L, sizeof(fpg))) FPG(fpg);
+			lua_pushcclosure(L, &CFunc::Call <FPG>::f, 1);
+			rawsetfield(L, -2, "__propdefaultget");
+		}
+
+		{
+			// Add to __propdefaultset in class table.
+			new (lua_newuserdata(L, sizeof(fps))) FPS(fps);
+			lua_pushcclosure(L, &CFunc::Call <FPS>::f, 1);
+			rawsetfield(L, -2, "__propdefaultset");
+		}
 
 		return *this;
 	}
