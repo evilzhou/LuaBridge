@@ -7,8 +7,6 @@
 
 修改功能：
 
-
-  
     减少addProperty时对const关键字的依赖，适用于某些特殊场景；
   
     增加addPropertyDefault接口，适用于某些特殊场景
