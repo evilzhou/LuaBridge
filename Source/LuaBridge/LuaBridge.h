@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
   https://github.com/vinniefalco/LuaBridge
-  
+
   Copyright 2012, Vinnie Falco <vinnie.falco@gmail.com>
   Copyright 2007, Nathan Reed
 
@@ -46,10 +46,10 @@
 namespace luabridge
 {
 
-// Forward declaration
-//
-template <class T>
-struct Stack;
+	// Forward declaration
+	//
+	template <class T>
+	struct Stack;
 
 #include "detail/LuaHelpers.h"
 
@@ -60,82 +60,82 @@ struct Stack;
 #include "detail/Stack.h"
 #include "detail/ClassInfo.h"
 
-class LuaRef;
+	class LuaRef;
 
 #include "detail/LuaException.h"
 #include "detail/LuaRef.h"
 #include "detail/Iterator.h"
 
-//------------------------------------------------------------------------------
-/**
-    security options.
-*/
-class Security
-{
-public:
-  static bool hideMetatables ()
-  {
-    return getSettings().hideMetatables;
-  }
+	//------------------------------------------------------------------------------
+	/**
+		security options.
+	*/
+	class Security
+	{
+	public:
+		static bool hideMetatables()
+		{
+			return getSettings().hideMetatables;
+		}
 
-  static void setHideMetatables (bool shouldHide)
-  {
-    getSettings().hideMetatables = shouldHide;
-  }
+		static void setHideMetatables(bool shouldHide)
+		{
+			getSettings().hideMetatables = shouldHide;
+		}
 
-private:
-  struct Settings
-  {
-    Settings () : hideMetatables (true)
-    {
-    }
+	private:
+		struct Settings
+		{
+			Settings() : hideMetatables(true)
+			{
+			}
 
-    bool hideMetatables;
-  };
+			bool hideMetatables;
+		};
 
-  static Settings& getSettings ()
-  {
-    static Settings settings;
-    return settings;
-  }
-};
+		static Settings& getSettings()
+		{
+			static Settings settings;
+			return settings;
+		}
+	};
 
 #include "detail/Userdata.h"
 #include "detail/CFunctions.h"
 #include "detail/Namespace.h"
 
-//------------------------------------------------------------------------------
-/**
-    Push an object onto the Lua stack.
-*/
-template <class T>
-inline void push (lua_State* L, T t)
-{
-  Stack <T>::push (L, t);
-}
+	//------------------------------------------------------------------------------
+	/**
+		Push an object onto the Lua stack.
+	*/
+	template <class T>
+	inline void push(lua_State* L, T t)
+	{
+		Stack <T>::push(L, t);
+	}
 
-//------------------------------------------------------------------------------
-/**
-  Set a global value in the lua_State.
+	//------------------------------------------------------------------------------
+	/**
+	  Set a global value in the lua_State.
 
-  @note This works on any type specialized by `Stack`, including `LuaRef` and
-        its table proxies.
-*/
-template <class T>
-inline void setGlobal (lua_State* L, T t, char const* name)
-{
-  push (L, t);
-  lua_setglobal (L, name);
-}
+	  @note This works on any type specialized by `Stack`, including `LuaRef` and
+			its table proxies.
+	*/
+	template <class T>
+	inline void setGlobal(lua_State* L, T t, char const* name)
+	{
+		push(L, t);
+		lua_setglobal(L, name);
+	}
 
-//------------------------------------------------------------------------------
-/**
-  Change whether or not metatables are hidden (on by default).
-*/
-inline void setHideMetatables (bool shouldHide)
-{
-  Security::setHideMetatables (shouldHide);
-}
+	//------------------------------------------------------------------------------
+	/**
+	  Change whether or not metatables are hidden (on by default).
+	*/
+	inline void setHideMetatables(bool shouldHide)
+	{
+		Security::setHideMetatables(shouldHide);
+	}
 
 }
 

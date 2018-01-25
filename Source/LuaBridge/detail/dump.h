@@ -8,13 +8,13 @@ std::string dumpLuaState(lua_State *L) {
 	ostr << "top=" << top << ":\n";
 	for (i = 1; i <= top; ++i) {
 		int t = lua_type(L, i);
-		switch(t) {
+		switch (t) {
 		case LUA_TSTRING:
 			ostr << "  " << i << ": '" << lua_tostring(L, i) << "'\n";
 			break;
 		case LUA_TBOOLEAN:
-			ostr << "  " << i << ": " << 
-					(lua_toboolean(L, i) ? "true" : "false") << "\n";
+			ostr << "  " << i << ": " <<
+				(lua_toboolean(L, i) ? "true" : "false") << "\n";
 			break;
 		case LUA_TNUMBER:
 			ostr << "  " << i << ": " << lua_tonumber(L, i) << "\n";
