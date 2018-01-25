@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="头文件\LuaBridge">
+      <UniqueIdentifier>{ff03d260-bed4-4587-802f-7b07e3a35a9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\LuaBridge\detail">
+      <UniqueIdentifier>{7278253d-3bdb-4950-a095-60b2f248cee9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Test.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Source\LuaBridge\LuaBridge.h">
+      <Filter>头文件\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\LuaBridge\RefCountedObject.h">
+      <Filter>头文件\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\LuaBridge\RefCountedPtr.h">
+      <Filter>头文件\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\LuaBridge\detail\CFunctions.h">
+      <Filter>头文件\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\LuaBridge\detail\ClassInfo.h">
+      <Filter>头文件\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\LuaBridge\detail\Constructor.h">
+      <Filter>头文件\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\LuaBridge\detail\dump.h">
+      <Filter>头文件\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\LuaBridge\detail\FuncTraits.h">
+      <Filter>头文件\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\LuaBridge\detail\Iterator.h">
+      <Filter>头文件\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\LuaBridge\detail\LuaException.h">
+      <Filter>头文件\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\LuaBridge\detail\LuaHelpers.h">
+      <Filter>头文件\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\LuaBridge\detail\LuaRef.h">
+      <Filter>头文件\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\LuaBridge\detail\Namespace.h">
+      <Filter>头文件\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\LuaBridge\detail\Stack.h">
+      <Filter>头文件\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\LuaBridge\detail\TypeList.h">
+      <Filter>头文件\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\LuaBridge\detail\TypeTraits.h">
+      <Filter>头文件\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\LuaBridge\detail\Userdata.h">
+      <Filter>头文件\LuaBridge\detail</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
