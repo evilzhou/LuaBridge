@@ -4,6 +4,12 @@
 
 # LuaBridge 2.0
 
+
+增加功能：
+  减少addProperty时对const关键字的依赖，适用于某些特殊场景；
+  增加addPropertyDefault接口，适用于某些特殊场景
+
+
 [LuaBridge][1] is a lightweight and dependency-free library for mapping data,
 functions, and classes back and forth between C++ and [Lua][2] (a powerful,
 fast, lightweight, embeddable scripting language) . LuaBridge has been tested
