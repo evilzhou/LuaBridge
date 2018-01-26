@@ -918,6 +918,34 @@ private:
 			return *this;
 		}
 
+		template <class FPG>
+		Class <T>& addPropertyDefaultGet(FPG const fpg)
+		{
+			// Add to __propdefaultget in class and const tables.
+			{
+				new (lua_newuserdata(L, sizeof(fpg))) FPG(fpg);
+				lua_pushcclosure(L, &CFunc::CallConstMember <FPG>::f, 1);
+				lua_pushvalue(L, -1);
+				rawsetfield(L, -5, "__propdefaultget");
+				rawsetfield(L, -3, "__propdefaultget");
+			}
+
+			return *this;
+		}
+
+		template <class FPS>
+		Class <T>& addPropertyDefaultSet(FPS const fps)
+		{
+			{
+				// Add to __propdefaultset in class table.
+				new (lua_newuserdata(L, sizeof(fps))) FPS(fps);
+				lua_pushcclosure(L, &CFunc::CallMember <FPS>::f, 1);
+				rawsetfield(L, -3, "__propdefaultset");
+			}
+
+			return *this;
+		}
+
 		//--------------------------------------------------------------------------
 		/**
 		  Add or replace a property member, by proxy.
@@ -1328,6 +1356,32 @@ public:
 			rawsetfield(L, -2, "__propdefaultget");
 		}
 
+		{
+			// Add to __propdefaultset in class table.
+			new (lua_newuserdata(L, sizeof(fps))) FPS(fps);
+			lua_pushcclosure(L, &CFunc::Call <FPS>::f, 1);
+			rawsetfield(L, -2, "__propdefaultset");
+		}
+
+		return *this;
+	}
+
+	template <class FPG>
+	Namespace& addPropertyDefaultGet(FPG const fpg)
+	{
+		// Add to __propdefaultget in class and const tables.
+		{
+			new (lua_newuserdata(L, sizeof(fpg))) FPG(fpg);
+			lua_pushcclosure(L, &CFunc::Call <FPG>::f, 1);
+			rawsetfield(L, -2, "__propdefaultget");
+		}
+
+		return *this;
+	}
+
+	template <class FPS>
+	Namespace& addPropertyDefaultSet(FPS const fps)
+	{
 		{
 			// Add to __propdefaultset in class table.
 			new (lua_newuserdata(L, sizeof(fps))) FPS(fps);
