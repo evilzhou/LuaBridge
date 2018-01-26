@@ -52,7 +52,6 @@ namespace luabridge
 	struct Stack;
 
 #include "detail/LuaHelpers.h"
-#include "detail/dump.h"
 #include "detail/TypeTraits.h"
 #include "detail/TypeList.h"
 #include "detail/FuncTraits.h"
